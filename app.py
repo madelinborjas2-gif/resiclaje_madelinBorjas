@@ -6,7 +6,7 @@ import streamlit as st
 import tensorflow as tf
 from PIL import Image
 
-st.set_page_config(page_title="Clasificador de reciclaje")
+st.set_page_config(page_title="Modelo predictivo Reciclaje clase de IA-UTH - 2026 - Madelin Borjas")
 
 MODEL_DIR = Path("modelo_resiclaje_mobilenet")
 MODEL_PATH_KERAS = MODEL_DIR / "waste_mobilenet.keras"
