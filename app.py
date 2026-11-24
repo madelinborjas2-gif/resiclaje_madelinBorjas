@@ -8,7 +8,7 @@ from PIL import Image
 
 st.set_page_config(page_title="Clasificador de reciclaje")
 
-MODEL_DIR = Path("modelo_reciclaje_mobilenet")
+MODEL_DIR = Path("modelo_resiclaje_mobilenet")
 MODEL_PATH_H5 = MODEL_DIR / "waste_mobilenet.h5"
 MODEL_PATH_KERAS = MODEL_DIR / "waste_mobilenet.keras"
 CLASSES_PATH = MODEL_DIR / "class_names.json"
@@ -43,7 +43,7 @@ def load_model():
     if model_path is None:
         st.error(
             "No se encontró el modelo. Sube al repositorio la carpeta "
-            "'modelo_reciclaje_mobilenet' con 'waste_mobilenet.h5' "
+            "'modelo_resiclaje_mobilenet' con 'waste_mobilenet.h5' "
             "o 'waste_mobilenet.keras' y 'class_names.json'."
         )
         st.stop()
