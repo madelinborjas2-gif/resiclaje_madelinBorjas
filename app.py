@@ -78,7 +78,7 @@ st.caption("Clases disponibles: vidrio, papel, cartón y plástico.")
 class_names = load_class_names()
 model = load_model()
 
-tab_cam, tab_file = st.tabs(["📷 Usar cámara", "📁 Subir imagen"])
+tab_cam, tab_file = st.tabs(["Usar cámara", "Subir imagen"])
 
 with tab_cam:
     camera_photo = st.camera_input("Toma una fotografía del residuo")
