@@ -6,21 +6,19 @@ import streamlit as st
 import tensorflow as tf
 from PIL import Image
 
-st.title("Modelo predictivo Reciclaje clase de IA-UTH - 2026 - Madelin Borjas")
+st.title("Clasificador de Residuos en la Nube - IA UTH 2026 - Madelin Borjas")
 
 MODEL_DIR = Path("modelo_resiclaje_mobilenet")
 MODEL_PATH_KERAS = MODEL_DIR / "waste_mobilenet.keras"
 MODEL_PATH_H5 = MODEL_DIR / "waste_mobilenet.h5"
-CLASSES_PATH = MODEL_DIR / "class_names.json"
+CLASSES_PATH = MODEL_DIR / "waste_mobilenet.json"
 IMG_SIZE = (224, 224)
 
 LABELS_ES = {
     "cardboard": "Cartón",
     "glass": "Vidrio",
-    "metal": "Metal",
     "paper": "Papel",
     "plastic": "Plástico",
-    "trash": "Basura",
 }
 
 
@@ -44,7 +42,7 @@ def load_model():
         st.error(
             "No se encontró el modelo. Sube al repositorio la carpeta "
             "'modelo_resiclaje_mobilenet' con 'waste_mobilenet.keras' "
-            "o 'waste_mobilenet.h5' y 'class_names.json'."
+            "o 'waste_mobilenet.h5' y 'waste_mobilenet.json'."
         )
         st.stop()
 
@@ -57,51 +55,52 @@ def load_model():
 
 def prepare_image(image: Image.Image) -> np.ndarray:
     image = image.convert("RGB").resize(IMG_SIZE)
-    arr = np.array(image, dtype=np.float32) / 255.0
+    arr = np.array(image, dtype=np.float32)
     arr = np.expand_dims(arr, axis=0)
     return arr
 
 
-def predict_top3(model, class_names: list[str], image: Image.Image):
+def predict_all(model, class_names: list[str], image: Image.Image):
     x = prepare_image(image)
     preds = model.predict(x, verbose=0)[0]
-    top3_idx = np.argsort(preds)[-3:][::-1]
+    sorted_idx = np.argsort(preds)[::-1]
     results = []
-    for idx in top3_idx:
+    for idx in sorted_idx:
         raw_label = class_names[idx]
         show_label = LABELS_ES.get(raw_label, raw_label)
         results.append((raw_label, show_label, float(preds[idx]) * 100))
-    return results
+    return results, preds
 
 
-st.title("Clasificador de residuos")
-st.write("Sube una imagen y el modelo intentará identificar el tipo de residuo.")
-st.caption("Clases: cartón, vidrio, metal, papel, plástico y basura general.")
+st.write("Toma una fotografía desde la cámara o sube una imagen para clasificar el residuo.")
+st.caption("Clases disponibles: vidrio, papel, cartón y plástico.")
 
 class_names = load_class_names()
 model = load_model()
 
-uploaded_file = st.file_uploader("Selecciona una imagen", type=["jpg", "jpeg", "png"])
+tab_cam, tab_file = st.tabs(["📷 Usar cámara", "📁 Subir imagen"])
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Imagen cargada", use_container_width=True)
+with tab_cam:
+    camera_photo = st.camera_input("Toma una fotografía del residuo")
 
-    top3 = predict_top3(model, class_names, image)
-    principal = top3[0]
+with tab_file:
+    uploaded_file = st.file_uploader("Selecciona una imagen", type=["jpg", "jpeg", "png"])
+
+input_source = camera_photo if camera_photo is not None else uploaded_file
+
+if input_source is not None:
+    image = Image.open(input_source)
+    st.image(image, caption="Imagen capturada", use_container_width=True)
+
+    results, preds = predict_all(model, class_names, image)
+    principal = results[0]
 
     st.subheader("Predicción principal")
-    st.success(f"{principal[1]}: {principal[2]:.2f}%")
+    st.success(f"Clase predicha: **{principal[1]}** — Confianza: **{principal[2]:.2f}%**")
 
-    st.subheader("Top 3")
-    for _, label_es, score in top3:
-        st.write(f"- {label_es}: {score:.2f}%")
-
-    st.subheader("Detalle por clase")
-    x = prepare_image(image)
-    preds = model.predict(x, verbose=0)[0]
+    st.subheader("Detalle de probabilidades por clase")
     for i, raw_label in enumerate(class_names):
         label_es = LABELS_ES.get(raw_label, raw_label)
         st.progress(float(preds[i]), text=f"{label_es}: {preds[i]*100:.2f}%")
 else:
-    st.info("Carga una imagen para comenzar.")
+    st.info("Toma una foto con la cámara o carga una imagen para comenzar.")
